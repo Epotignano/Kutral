@@ -70,7 +70,7 @@ var aggregation = function(aggregationKeys) {
             }
 
           } else {
-            if(!(data[dataKey][conditionKeys[j]].match(/conditon[conditionKeys[j]]/ig)) ) {
+            if(!(data[dataKey][conditionKeys[j]].match(new RegExp(condition[conditionKeys[j]],"ig") ) )) {
               candidateToDelete = true;
               break;
             }

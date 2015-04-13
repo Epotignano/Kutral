@@ -137,23 +137,9 @@ kutral = function ($firebaseObject, $firebaseArray, $q, aggregationKeys, aggrega
     var queryKeys = Object.keys(query);
 
     self.queue.add(function(self) {
-      var uniqueIdKey = parsers.determineUniqueId(self.internalSchema.schema);
+     if(queryKeys.length == 1 && queryKeys[0].indexOf("$") != -1) {
 
-      if(queryKeys.length == 1 && queryKeys[0].indexOf("$") == -1) {
-        self.ref.orderByChild(queryKeys[0]).startAt(query[queryKeys[0]]).endAt(query[queryKeys[0]]+"~")
-          .on('value',function(matchSnapshot) {
-            var data = matchSnapshot.val();
-            self.data = data;
-
-            if(!callback) {
-              self.queue.flush(self);
-            } else {
-              callback(self.data);
-            }
-
-          });
-      } else if(queryKeys.length == 1 && queryKeys[0].indexOf("$") != -1) {
-
+        var aggregationKeys = Object.keys(query);
         var aggregate;
 
         for(var i = 0; aggregationKeys.length > i; i++) {
@@ -171,9 +157,7 @@ kutral = function ($firebaseObject, $firebaseArray, $q, aggregationKeys, aggrega
           dataKeys.map(function(dataKey) {
             var deleteIt = aggregation[aggregate](query[aggregate], data, dataKey, true);
             if(deleteIt) {
-              delete data[dataKey]
-            } else {
-              data[dataKey][uniqueIdKey] = dataKey
+              delete data[dataKey];
             }
           });
 
@@ -184,11 +168,9 @@ kutral = function ($firebaseObject, $firebaseArray, $q, aggregationKeys, aggrega
           } else {
             callback(self.data);
           }
+        });
 
-
-        })
-
-      } else if(queryKeys.length > 1) {
+      } else {
 
         self.ref.on('value', function(collectionSnapshot) {
 
@@ -213,19 +195,15 @@ kutral = function ($firebaseObject, $firebaseArray, $q, aggregationKeys, aggrega
 
           });
 
-          if(aggregationKeys.length) {
-            dataKeys = Object.keys(data);
-            dataKeys.map(function(dataKey) {
-              aggregationKeys.map(function(aggregationKey) {
-                var deleteIt = aggregation[aggregationKey](query[aggregationKey], data, dataKey);
-                if(deleteIt) {
-                  delete data[dataKey]
-                } else {
-                  data[dataKey][uniqueIdKey] = dataKey
-                }
-              });
+          dataKeys = Object.keys(data);
+          dataKeys.map(function(dataKey) {
+            aggregationKeys.map(function(aggregationKey) {
+              var deleteIt = aggregation[aggregationKey](query[aggregationKey], data, dataKey);
+              if(deleteIt) {
+                delete data[dataKey]
+              }
             });
-          }
+          });
 
           self.data = data;
 
@@ -769,3 +747,5 @@ kutral = function ($firebaseObject, $firebaseArray, $q, aggregationKeys, aggrega
 
 angular.module('fireQuery', ['firebase', 'fireQuery.aggregation', 'fireQuery.find', 'fireQuery.parsers'])
   .factory('Kutral', ['$firebaseObject', '$firebaseArray', '$q', 'aggregationKeys', 'aggregation', 'find','parsers', kutral ]);
+
+
